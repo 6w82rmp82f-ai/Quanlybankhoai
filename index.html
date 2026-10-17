@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#166534">
+<title>Quầy Ăn Vặt - Quản lý</title>
+<style>
+:root{--green:#166534;--green2:#15803d;--bg:#f3f6f4;--card:#fff;--text:#17211b;--muted:#647067;--line:#dce5de;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{background:var(--green);color:white;padding:18px 16px 15px;position:sticky;top:0;z-index:5}header h1{font-size:21px;margin:0 0 5px}header p{margin:0;font-size:12px;opacity:.9}
+main{max-width:850px;margin:auto;padding:12px}.tab{display:none}.tab.active{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:7px 2px calc(7px + env(safe-area-inset-bottom));z-index:10}
+nav button{border:0;background:none;color:var(--muted);font-size:11px;padding:5px 3px;flex:1}nav button b{display:block;font-size:19px;margin-bottom:2px}nav button.active{color:var(--green);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px #0f172a08}
+h2{font-size:18px;margin:3px 0 12px}h3{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:12px}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.between{justify-content:space-between}.grow{flex:1}
+label{display:block;font-size:12px;color:var(--muted);margin:9px 0 4px}input,select,textarea{width:100%;border:1px solid #cbd5ce;border-radius:9px;padding:11px;font:inherit;background:white;color:var(--text)}button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:9px;background:var(--green);color:#fff;padding:11px 13px;font-weight:600}.btn.secondary{background:#e7f3e9;color:var(--green)}.btn.danger{background:#fee2e2;color:var(--red)}.btn.small{padding:7px 9px;font-size:12px}.btn.full{width:100%;margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{background:#f0f8f1;border-radius:11px;padding:12px}.metric strong{display:block;font-size:19px;color:var(--green);margin-top:4px;overflow-wrap:anywhere}
+.item{border:1px solid var(--line);border-radius:10px;padding:11px;margin-top:8px}.item-title{font-weight:700}.price{color:var(--green);font-weight:700}.qty{display:flex;align-items:center;gap:8px}.qty button{width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:white;font-size:18px}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}.empty{text-align:center;padding:18px;color:var(--muted)}.pill{background:#e7f3e9;color:var(--green);padding:3px 8px;border-radius:20px;font-size:11px}.warn{background:#fff7ed;color:#9a3412;padding:10px;border-radius:9px;font-size:12px;margin-bottom:10px}.hidden{display:none!important}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:650px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header><h1>🥡 Quầy Ăn Vặt</h1><p>Quản lý bán hàng · nguyên liệu · công thức · thu chi</p></header>
+<main>
+<section id="sales" class="tab active">
+ <div class="grid" id="quickMetrics"></div>
+ <div class="card"><div class="row between"><h2>Danh sách món</h2><button class="btn secondary small" onclick="showTab('dishes')">+ Quản lý món</button></div><input id="saleSearch" placeholder="Tìm món..." oninput="renderSales()"><div id="saleDishes"></div></div>
+ <div class="card"><h2>Đơn hàng hiện tại</h2><div id="cart"></div><div class="row between"><strong>Tổng cộng</strong><strong class="price" id="cartTotal">0 ₫</strong></div><button class="btn full" onclick="checkout()">Xác nhận bán hàng</button></div>
+ <div class="card"><h3>Đơn gần đây</h3><div id="recentOrders"></div></div>
+</section>
+<section id="ingredients" class="tab">
+ <div class="card"><h2>Nhập nguyên liệu</h2><div class="two"><div><label>Tên nguyên liệu</label><input id="ingName" placeholder="Ví dụ: Khoai lang"></div><div><label>Giá mua (đồng/kg)</label><input id="ingPrice" type="number" min="0" placeholder="Ví dụ: 25000"></div></div>
+ <div class="two"><div><label>Số lượng nhập</label><input id="ingQty" type="number" min="0" step="any" placeholder="Ví dụ: 2.5"></div><div><label>Đơn vị nhập</label><select id="ingUnit"><option value="kg">kg</option><option value="g">gram (g)</option></select></div></div>
+ <label>Ghi chú (không bắt buộc)</label><input id="ingNote" placeholder="Nhà cung cấp, hạn dùng..."><button class="btn full" onclick="addIngredient()">Lưu nhập kho</button><p class="muted">Hệ thống quy đổi về gram để tính công thức. Giá mua nhập theo đồng/kg.</p></div>
+ <div class="card"><div class="row between"><h2>Tồn nguyên liệu</h2><button class="btn secondary small" onclick="renderIngredients()">Làm mới</button></div><input id="ingSearch" placeholder="Tìm nguyên liệu..." oninput="renderIngredients()"><div id="ingredientList"></div></div>
+ <div class="card"><h3>Lịch sử nhập kho</h3><div id="stockHistory"></div></div>
+</section>
+<section id="dishes" class="tab">
+ <div class="card"><h2>Thêm / sửa món</h2><input id="dishId" type="hidden"><label>Tên món</label><input id="dishName" placeholder="Ví dụ: Khoai lang lắc"><div class="two"><div><label>Giá bán (đồng/phần)</label><input id="dishPrice" type="number" min="0" placeholder="15000"></div><div><label>Trạng thái</label><select id="dishActive"><option value="true">Đang bán</option><option value="false">Tạm ngưng</option></select></div></div>
+ <hr><h3>Công thức cho 1 phần</h3><p class="muted">Chọn nguyên liệu và nhập số gram dùng cho một phần. Có thể thêm nhiều dòng.</p><div id="recipeRows"></div><button class="btn secondary small" onclick="addRecipeRow()">+ Thêm nguyên liệu</button><button class="btn full" onclick="saveDish()">Lưu món và công thức</button><button class="btn danger full" onclick="resetDishForm()">Xóa trắng biểu mẫu</button></div>
+ <div class="card"><h2>Các món đã khai báo</h2><div id="dishList"></div></div>
+</section>
+<section id="expenses" class="tab">
+ <div class="card"><h2>Ghi thu / chi</h2><div class="two"><div><label>Loại</label><select id="exType"><option value="expense">Chi phí</option><option value="income">Thu khác</option></select></div><div><label>Số tiền (đồng)</label><input id="exAmount" type="number" min="0" placeholder="50000"></div></div><label>Nội dung</label><input id="exNote" placeholder="Tiền điện, bao bì..."><button class="btn full" onclick="addExpense()">Lưu khoản thu/chi</button></div>
+ <div class="card"><h2>Lịch sử thu chi</h2><div id="expenseList"></div></div>
+</section>
+<section id="reports" class="tab">
+ <div class="card"><h2>Báo cáo tổng quan</h2><div class="grid" id="reportMetrics"></div><p class="muted">Lợi nhuận ước tính = doanh thu đơn đã bán − giá vốn công thức − chi phí đã ghi. Chưa tính các chi phí chưa nhập và hao hụt chưa ghi nhận.</p></div>
+ <div class="card"><h2>Sao lưu & khôi phục</h2><p class="muted">Dữ liệu lưu trên trình duyệt của thiết bị này. Hãy sao lưu định kỳ.</p><button class="btn full" onclick="backup()">Tải bản sao lưu JSON</button><label>Khôi phục từ tệp JSON</label><input type="file" id="restoreFile" accept=".json,application/json"><button class="btn secondary full" onclick="restore()">Khôi phục dữ liệu</button><button class="btn danger full" onclick="clearAll()">Xóa toàn bộ dữ liệu</button></div>
+ <div class="card"><h3>Thông tin</h3><p class="muted">Phiên bản 2.0 · Dữ liệu lưu cục bộ trên iPhone. Không tự đồng bộ sang thiết bị khác.</p></div>
+</section>
+</main>
+<nav>
+<button class="active" data-tab="sales" onclick="showTab('sales')"><b>🧾</b>Bán hàng</button>
+<button data-tab="ingredients" onclick="showTab('ingredients')"><b>🥔</b>Nguyên liệu</button>
+<button data-tab="dishes" onclick="showTab('dishes')"><b>🍟</b>Món & CT</button>
+<button data-tab="expenses" onclick="showTab('expenses')"><b>💵</b>Thu chi</button>
+<button data-tab="reports" onclick="showTab('reports')"><b>📊</b>Báo cáo</button>
+</nav>
+<script>
+const KEY='quan-an-vat-pro-v2';
+let db={ingredients:[],dishes:[],orders:[],expenses:[],stockHistory:[]},cart={};
+const $=id=>document.getElementById(id);
+const money=n=>Math.round(Number(n)||0).toLocaleString('vi-VN')+' ₫';
+const num=n=>Number(n)||0;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const stamp=()=>new Date().toLocaleString('vi-VN');
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function load(){try{let x=localStorage.getItem(KEY);if(x)db={...db,...JSON.parse(x)}}catch(e){alert('Không đọc được dữ liệu lưu.')} renderAll()}
+function showTab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.id===t));document.querySelectorAll('nav button').forEach(e=>e.classList.toggle('active',e.dataset.tab===t));if(t==='dishes')renderDishes();if(t==='ingredients')renderIngredients();if(t==='reports')renderReports();if(t==='expenses')renderExpenses();if(t==='sales')renderSales()}
+function ingById(id){return db.ingredients.find(x=>x.id===id)}
+function dishById(id){return db.dishes.find(x=>x.id===id)}
+function recipeCost(d){return (d.recipe||[]).reduce((s,r)=>s+(ingById(r.ingredientId)?ingById(r.ingredientId).pricePerGram*r.grams:0),0)}
+function fmtDate(s){return s||''}
+function renderAll(){renderSales();renderIngredients();renderDishes();renderExpenses();renderReports()}
+function renderSales(){
+ const today=new Date().toLocaleDateString('sv-SE');
+ const todayOrders=db.orders.filter(o=>o.dateKey===today&&!o.cancelled);
+ $('quickMetrics').innerHTML=`<div class="metric"><span class="muted">Doanh thu hôm nay</span><strong>${money(todayOrders.reduce((s,o)=>s+o.total,0))}</strong></div><div class="metric"><span class="muted">Đơn hôm nay</span><strong>${todayOrders.length}</strong></div>`;
+ let q=($('saleSearch')?.value||'').toLowerCase();
+ let ds=db.dishes.filter(d=>d.active!==false&&d.name.toLowerCase().includes(q));
+ $('saleDishes').innerHTML=ds.length?ds.map(d=>`<div class="item row between"><div class="grow"><div class="item-title">${esc(d.name)}</div><div class="price">${money(d.price)}</div><div class="muted">Giá vốn ước tính: ${money(recipeCost(d))}/phần</div></div><button class="btn small" onclick="addCart('${d.id}')">+ Thêm</button></div>`).join(''):'<div class="empty">Chưa có món. Vào “Món & CT” để tạo món.</div>';
+ let entries=Object.entries(cart).filter(([id,n])=>n>0);
+ $('cart').innerHTML=entries.length?entries.map(([id,n])=>{let d=dishById(id);return d?`<div class="item row between"><div class="grow"><b>${esc(d.name)}</b><div class="muted">${money(d.price)} × ${n}</div></div><div class="qty"><button onclick="changeCart('${id}',-1)">−</button><b>${n}</b><button onclick="changeCart('${id}',1)">+</button></div></div>`:''}).join(''):'<div class="empty">Chưa có món trong đơn.</div>';
+ $('cartTotal').textContent=money(entries.reduce((s,[id,n])=>s+(dishById(id)?.price||0)*n,0));
+ $('recentOrders').innerHTML=db.orders.slice(-5).reverse().map(o=>`<div class="item"><div class="row between"><b>${esc(o.time)}</b><b>${money(o.total)}</b></div><div class="muted">${o.items.map(i=>esc(i.name)+' × '+i.qty).join(', ')}</div>${o.cancelled?'<span class="pill">Đã hủy</span>':`<button class="btn danger small" onclick="cancelOrder('${o.id}')">Hủy đơn / hoàn kho</button>`}</div>`).join('')||'<div class="empty">Chưa có đơn hàng.</div>';
+}
+function addCart(id){cart[id]=(cart[id]||0)+1;renderSales()}
+function changeCart(id,delta){cart[id]=(cart[id]||0)+delta;if(cart[id]<=0)delete cart[id];renderSales()}
+function requirementsForCart(){let req={};for(let [id,qty] of Object.entries(cart)){let d=dishById(id);if(!d)continue;for(let r of (d.recipe||[]))req[r.ingredientId]=(req[r.ingredientId]||0)+r.grams*qty}return req}
+function checkout(){
+ let entries=Object.entries(cart).filter(([id,n])=>n>0);if(!entries.length)return alert('Đơn hàng đang trống.');
+ let req=requirementsForCart(),short=[];
+ for(let [id,g] of Object.entries(req)){let ing=ingById(id);if(!ing||ing.stockGram<g)short.push((ing?.name||'Nguyên liệu đã xóa')+': cần '+g.toFixed(1)+' g, còn '+(ing?.stockGram||0).toFixed(1)+' g')}
+ if(short.length)return alert('Không đủ nguyên liệu để bán:\\n'+short.join('\\n')+'\\nVui lòng nhập kho hoặc sửa công thức.');
+ let items=entries.map(([id,qty])=>{let d=dishById(id);return {dishId:id,name:d.name,qty,price:d.price,cost:recipeCost(d),recipe:(d.recipe||[]).map(r=>({...r}))}});
+ let total=items.reduce((s,i)=>s+i.price*i.qty,0),cost=items.reduce((s,i)=>s+i.cost*i.qty,0);
+ for(let [id,g] of Object.entries(req)){let ing=ingById(id);if(ing)ing.stockGram-=g}
+ db.orders.push({id:uid(),time:stamp(),dateKey:new Date().toLocaleDateString('sv-SE'),items,total,cost,cancelled:false,stockReturned:false});
+ cart={};save();renderAll();alert('Đã ghi nhận đơn hàng: '+money(total));
+}
+function cancelOrder(id){let o=db.orders.find(x=>x.id===id);if(!o||o.cancelled)return;if(!confirm('Hủy đơn này? Nguyên liệu sẽ được hoàn lại kho nếu có công thức đã lưu.'))return;
+ if(!o.stockReturned){for(let item of o.items){for(let r of (item.recipe||[])){let ing=ingById(r.ingredientId);if(ing)ing.stockGram+=r.grams*item.qty}}o.stockReturned=true}
+ o.cancelled=true;save();renderAll();
+}
+function addIngredient(){
+ let name=$('ingName').value.trim(),price=num($('ingPrice').value),qty=num($('ingQty').value),unit=$('ingUnit').value,note=$('ingNote').value.trim();
+ if(!name||price<0||qty<=0)return alert('Nhập tên, giá/kg và số lượng hợp lệ.');
+ let id=uid(),g=qty*(unit==='kg'?1000:1),existing=db.ingredients.find(x=>x.name.toLowerCase()===name.toLowerCase());
+ if(existing){existing.stockGram+=g;existing.pricePerGram=price/1000;id=existing.id}else db.ingredients.push({id,name,stockGram:g,pricePerGram:price/1000,note});
+ db.stockHistory.push({id:uid(),name,qty,unit,grams:g,price,time:stamp(),note});
+ $('ingName').value='';$('ingPrice').value='';$('ingQty').value='';$('ingNote').value='';save();renderAll();alert('Đã nhập kho '+g.toLocaleString('vi-VN')+' g '+name+'.');
+}
+function renderIngredients(){
+ let q=($('ingSearch')?.value||'').toLowerCase();
+ $('ingredientList').innerHTML=db.ingredients.filter(i=>i.name.toLowerCase().includes(q)).map(i=>`<div class="item"><div class="row between"><b>${esc(i.name)}</b><span class="pill">${i.stockGram<1000?i.stockGram.toFixed(1)+' g':(i.stockGram/1000).toFixed(3)+' kg'}</span></div><div class="muted">Giá hiện tại: ${money(i.pricePerGram*1000)}/kg · Giá trị tồn ước tính: ${money(i.stockGram*i.pricePerGram)}</div><div class="row" style="margin-top:8px"><button class="btn secondary small" onclick="adjustStock('${i.id}')">Kiểm kê / điều chỉnh</button><button class="btn danger small" onclick="deleteIngredient('${i.id}')">Xóa</button></div></div>`).join('')||'<div class="empty">Chưa có nguyên liệu.</div>';
+ $('stockHistory').innerHTML=db.stockHistory.slice(-12).reverse().map(h=>`<div class="item"><div class="row between"><b>${esc(h.name)}</b><span class="price">+${h.qty} ${h.unit}</span></div><div class="muted">${esc(h.time)} · ${money(h.price)}/kg ${h.note?'· '+esc(h.note):''}</div></div>`).join('')||'<div class="empty">Chưa có lịch sử nhập kho.</div>';
+}
+function adjustStock(id){let i=ingById(id);if(!i)return;let current=(i.stockGram/1000).toFixed(3),v=prompt('Nhập tồn thực tế theo kg cho '+i.name+'. Tồn hiện tại: '+current+' kg',current);if(v===null)return;let kg=Number(v);if(!Number.isFinite(kg)||kg<0)return alert('Số lượng không hợp lệ.');let old=i.stockGram;i.stockGram=kg*1000;db.stockHistory.push({id:uid(),name:i.name,qty:(i.stockGram-old)/1000,unit:'kg (điều chỉnh)',grams:i.stockGram-old,price:i.pricePerGram*1000,time:stamp(),note:'Kiểm kê tồn kho'});save();renderAll()}
+function deleteIngredient(id){let i=ingById(id);if(!i)return;if(db.dishes.some(d=>(d.recipe||[]).some(r=>r.ingredientId===id)))return alert('Nguyên liệu đang được dùng trong công thức. Hãy sửa công thức trước khi xóa.');if(confirm('Xóa nguyên liệu '+i.name+'?')){db.ingredients=db.ingredients.filter(x=>x.id!==id);save();renderAll()}}
+function addRecipeRow(selected='',grams=''){let row=document.createElement('div');row.className='row recipe-row';row.style.marginTop='7px';row.innerHTML=`<div class="grow"><select class="r-ing"><option value="">-- Chọn nguyên liệu --</option>${db.ingredients.map(i=>`<option value="${i.id}">${esc(i.name)} (còn ${(i.stockGram/1000).toFixed(3)} kg)</option>`).join('')}</select></div><div style="width:92px"><input class="r-grams" type="number" min="0" step="any" placeholder="gram" value="${grams}"></div><button class="btn danger small" onclick="this.parentElement.remove()">×</button>`;$('recipeRows').appendChild(row);row.querySelector('.r-ing').value=selected}
+function resetDishForm(){$('dishId').value='';$('dishName').value='';$('dishPrice').value='';$('dishActive').value='true';$('recipeRows').innerHTML='';addRecipeRow()}
+function saveDish(){
+ let id=$('dishId').value,name=$('dishName').value.trim(),price=num($('dishPrice').value),active=$('dishActive').value==='true';
+ if(!name||price<=0)return alert('Vui lòng nhập tên món và giá bán lớn hơn 0.');
+ let recipe=[...document.querySelectorAll('.recipe-row')].map(row=>({ingredientId:row.querySelector('.r-ing').value,grams:num(row.querySelector('.r-grams').value)})).filter(r=>r.ingredientId&&r.grams>0);
+ if(recipe.some(r=>!ingById(r.ingredientId)))return alert('Có nguyên liệu không hợp lệ.');
+ let d={id:id||uid(),name,price,active,recipe};let idx=db.dishes.findIndex(x=>x.id===d.id);if(idx>=0)db.dishes[idx]=d;else db.dishes.push(d);
+ save();resetDishForm();renderAll();alert('Đã lưu món và công thức.');
+}
+function editDish(id){let d=dishById(id);if(!d)return;$('dishId').value=d.id;$('dishName').value=d.name;$('dishPrice').value=d.price;$('dishActive').value=String(d.active!==false);$('recipeRows').innerHTML='';(d.recipe||[]).forEach(r=>addRecipeRow(r.ingredientId,r.grams));if(!(d.recipe||[]).length)addRecipeRow();showTab('dishes');window.scrollTo({top:0,behavior:'smooth'})}
+function deleteDish(id){let d=dishById(id);if(d&&confirm('Xóa món '+d.name+'?')){db.dishes=db.dishes.filter(x=>x.id!==id);delete cart[id];save();renderAll()}}
+function renderDishes(){
+ $('dishList').innerHTML=db.dishes.map(d=>`<div class="item"><div class="row between"><b>${esc(d.name)}</b><span class="pill">${d.active===false?'Tạm ngưng':'Đang bán'}</span></div><div class="price">${money(d.price)} · Giá vốn ${money(recipeCost(d))}</div><div class="muted">${(d.recipe||[]).map(r=>{let i=ingById(r.ingredientId);return esc(i?.name||'Nguyên liệu đã xóa')+': '+r.grams+' g'}).join(' · ')||'Chưa khai báo công thức'}</div><div class="row" style="margin-top:8px"><button class="btn secondary small" onclick="editDish('${d.id}')">Sửa</button><button class="btn danger small" onclick="deleteDish('${d.id}')">Xóa</button></div></div>`).join('')||'<div class="empty">Chưa có món nào.</div>';
+}
+function addExpense(){let type=$('exType').value,amount=num($('exAmount').value),note=$('exNote').value.trim();if(amount<=0||!note)return alert('Nhập nội dung và số tiền hợp lệ.');db.expenses.push({id:uid(),type,amount,note,time:stamp(),dateKey:new Date().toLocaleDateString('sv-SE')});$('exAmount').value='';$('exNote').value='';save();renderAll()}
+function renderExpenses(){$('expenseList').innerHTML=db.expenses.slice().reverse().map(e=>`<div class="item row between"><div class="grow"><b>${esc(e.note)}</b><div class="muted">${esc(e.time)} · ${e.type==='expense'?'Chi phí':'Thu khác'}</div></div><div style="text-align:right"><b style="color:${e.type==='expense'?'var(--red)':'var(--green)'}">${e.type==='expense'?'-':'+'}${money(e.amount)}</b><br><button class="btn danger small" onclick="deleteExpense('${e.id}')">Xóa</button></div></div>`).join('')||'<div class="empty">Chưa có khoản thu chi.</div>'}
+function deleteExpense(id){if(confirm('Xóa khoản thu/chi này?')){db.expenses=db.expenses.filter(e=>e.id!==id);save();renderAll()}}
+function renderReports(){
+ let valid=db.orders.filter(o=>!o.cancelled),today=new Date().toLocaleDateString('sv-SE'),todayOrders=valid.filter(o=>o.dateKey===today);
+ let revenue=valid.reduce((s,o)=>s+o.total,0),cost=valid.reduce((s,o)=>s+o.cost,0),expense=db.expenses.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0),income=db.expenses.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+ let profit=revenue-cost-expense+income;
+ $('reportMetrics').innerHTML=[['Doanh thu hôm nay',todayOrders.reduce((s,o)=>s+o.total,0)],['Tổng doanh thu',revenue],['Giá vốn đã bán',cost],['Chi phí đã ghi',expense],['Thu khác',income],['Lợi nhuận ước tính',profit]].map(([k,v])=>`<div class="metric"><span class="muted">${k}</span><strong>${money(v)}</strong></div>`).join('');
+}
+function backup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='sao-luu-quay-an-vat-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function restore(){let f=$('restoreFile').files[0];if(!f)return alert('Hãy chọn tệp sao lưu JSON trước.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.ingredients||!x.dishes||!x.orders)throw Error();if(!confirm('Khôi phục sẽ thay thế dữ liệu hiện tại. Tiếp tục?'))return;db={ingredients:[],dishes:[],orders:[],expenses:[],stockHistory:[],...x};save();renderAll();alert('Đã khôi phục dữ liệu.')}catch(e){alert('Tệp sao lưu không hợp lệ.')}};r.readAsText(f)}
+function clearAll(){if(prompt('Để xóa toàn bộ dữ liệu, hãy nhập XOA')!=='XOA')return;db={ingredients:[],dishes:[],orders:[],expenses:[],stockHistory:[]};cart={};save();renderAll();alert('Đã xóa dữ liệu trên trình duyệt này.')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+resetDishForm();load();
+</script>
+</body>
+</html>
